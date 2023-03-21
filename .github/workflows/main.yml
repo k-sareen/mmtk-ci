@@ -19,7 +19,7 @@ jobs:
         debug-level: ["fastdebug", "release"]
     steps:
       - name: Checkout repository
-        run: git clone https://github.com/mmtk-openjdk
+        run: git clone https://github.com/mmtk/mmtk-openjdk
       - name: Setup environment
         run: |
           ./.github/scripts/checkout.sh
