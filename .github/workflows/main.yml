@@ -25,6 +25,8 @@ jobs:
           ./.github/scripts/setup.sh
       - name: Style checks
         run: ./.github/scripts/style-check.sh
+      - name: Echo GitHub
+        run: echo ${{ github }}
       - name: Build ${{ matrix.debug-level }} MMTk OpenJDK
         run: DEBUG_LEVEL=${{ matrix.debug-level }} ./.github/scripts/build-normal.sh
       - name: Upload bundle
