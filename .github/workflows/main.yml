@@ -15,6 +15,7 @@ jobs:
     name: linux-x64
     runs-on: ubuntu-22.04
     strategy:
+      fail-fast: true
       matrix:
         debug-level: ["fastdebug", "release"]
     steps:
@@ -27,7 +28,7 @@ jobs:
       - name: Extract OpenJDK revision
         id: extract-openjdk-revision
         run: |
-          OPENJDK_VERSION=$(sed -n 's/^openjdk_version.=."\(.*\)"$/\1/p' < mmtk-openjdk/mmtk/Cargo.toml)
+          OPENJDK_VERSION=`sed -n 's/^openjdk_version.=."\(.*\)"$/\1/p' < mmtk-openjdk/mmtk/Cargo.toml`
           echo "openjdk-revision=$OPENJDK_VERSION" >> $GITHUB_OUTPUT
       - name: Checkout OpenJDK
         uses: actions/checkout@v3
@@ -47,6 +48,7 @@ jobs:
           name: linux-x86_64-server-${{ matrix.debug-level }}-bundles
           path: ./openjdk/build/linux-x86_64-normal-server-${{ matrix.debug-level }}/bundles/*_bin.tar.gz
           retention-days: 2
+
   test-linux-x64:
     name: linux-x64
     needs:
@@ -58,27 +60,27 @@ jobs:
         debug-level: ["fastdebug", "release"]
         benchmark:
           - avrora
-          # - batik
-          # - biojava
-          # - cassandra
-          # - eclipse
-          # - fop
-          # - graphchi
-          # - h2
-          # - h2o
-          # - jme
-          # - jython
-          # - kafka
-          # - luindex
-          # - lusearch
-          # - pmd
-          # # spring
-          # - sunflow
-          # - tomcat
-          # # tradebeans
-          # # tradesoap
+          - batik
+          - biojava
+          - cassandra
+          - eclipse
+          - fop
+          - graphchi
+          - h2
+          - h2o
+          - jme
+          - jython
+          - kafka
+          - luindex
+          - lusearch
+          - pmd
+          # spring
+          - sunflow
+          - tomcat
+          # tradebeans
+          # tradesoap
           - xalan
-          # - zxing
+          - zxing
     steps:
       - uses: actions/checkout@v3
       - name: Setup environment
@@ -113,7 +115,7 @@ jobs:
         run: |
           pushd bundles
           mkdir -p jdk
-          tar xvf "*.tar.gz" -C jdk --strip-components=1
+          tar xvf *.tar.gz -C jdk --strip-components=1
           popd
       - name: Run DaCapo Chopin git-04132797 ${{ matrix.benchmark }} on MMTk OpenJDK ${{ matrix.debug-level }} with 2.5x MarkCompact minheap
         run: |
@@ -124,7 +126,7 @@ jobs:
       - name: Extract running run id
         id: extract-running-run-id
         run: |
-          RUN_ID=$(sed -n 's/^Run id:.\(.*\)$/\1/p' < /tmp/running.stdout)
+          RUN_ID=`sed -n 's/^Run id:.\(.*\)$/\1/p' < /tmp/running.stdout`
           echo "run-id=$RUN_ID" >> $GITHUB_OUTPUT
       - name: Upload running artifacts
         uses: actions/upload-artifact@v3
