@@ -18,16 +18,23 @@ jobs:
       matrix:
         debug-level: ["fastdebug", "release"]
     steps:
-      - name: Checkout repository
-        run: |
-          pushd ..
-          git clone https://github.com/mmtk/mmtk-openjdk
-          popd
+      - name: Checkout MMTk OpenJDK binding
+        uses: actions/checkout@v3
+        with:
+          repository: mmtk/mmtk-openjdk
+          path: ../mmtk-openjdk
+      - name: Extract OpenJDK revision
+        id: extract-openjdk-revision
+        run: echo "::set-output name=openjdk-revision::$(sed -n 's/^openjdk_version.=."\(.*\)"$/\1/p' < mmtk-openjdk/mmtk/Cargo.toml)"
+      - name: Checkout OpenJDK
+        uses: actions/checkout@v3
+        with:
+          repository: mmtk/openjdk
+          path: ../openjdk
+          ref: ${{ steps.extract-openjdk-revision.outputs.openjdk-revision }}
       - uses: actions/checkout@v3
       - name: Setup environment
-        run: |
-          ./.github/scripts/checkout.sh
-          ./.github/scripts/setup.sh
+        run: ./.github/scripts/setup.sh
       # name: Style checks
       # run: ./.github/scripts/style-check.sh
       - name: Build MMTk OpenJDK ${{ matrix.debug-level }}
@@ -36,7 +43,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: linux-x86_64-server-${{ matrix.debug-level }}-bundles
-          path: $OPENJDK_PATH/build/linux-x86_64-normal-server-${{ matrix.debug-level }}/bundles/*
+          path: ../openjdk/build/linux-x86_64-normal-server-${{ matrix.debug-level }}/bundles/*
           retention-days: 1
   # test-linux-x64:
   #   name: linux-x64
