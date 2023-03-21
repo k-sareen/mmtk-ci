@@ -62,23 +62,32 @@ jobs:
         id: dacapo-04132797
         uses: actions/cache@v3
         with:
-          path: dacapo
+          path: dacapo/dacapo-evaluation-git-04132797.zip
           key: dacapo-chopin-git-04132797
       - name: Install DaCapo Chopin git-04132797
         if: steps.dacapo-04132797.outputs.cache-hit != 'true'
         run: |
           pip3 install gdown
           mkdir -p dacapo
-          cd dacapo
+          pushd dacapo
           gdown "1j4bJkjxEZeUMSQY4JmQwaaQCo-lsQ3Gv"
+          popd
+      - name: Unzip DaCapo Chopin git-04132797
+        run: |
+          pushd dacapo
           unzip dacapo-evaluation-git-04132797.zip
+          popd
       # name: Download bundles
       # uses: actions/download-artifact@v3
       # with:
       #   name: linux-x86_64-server-${{ matrix.debug-level }}-bundles
       #   path: bundles
       - name: Download OpenJDK
-        run: wget "https://github.com/wenyuzhao/lxr-builds/releases/download/latest/jdk11-linux-x86_64-normal-server-mmtk-lxr-release.tar.gz"
+        run: |
+          mkdir -p bundles
+          pushd bundles
+          wget "https://github.com/wenyuzhao/lxr-builds/releases/download/latest/jdk11-linux-x86_64-normal-server-mmtk-lxr-release.tar.gz"
+          popd
       # name: Extract OpenJDK
       # run: |
       #   pushd bundles
@@ -87,8 +96,10 @@ jobs:
       #   popd
       - name: Extract OpenJDK
         run: |
+          pushd bundles
           mkdir -p jdk
-          tar xvf "*.tar.gz" -C jdk --strip-components=1
+          tar xvf *.tar.gz -C jdk --strip-components=1
+          popd
       - name: Run DaCapo Chopin git-04132797 ${{ matrix.benchmark }} on MMTk OpenJDK ${{ matrix.debug-level }} with 2.5x MarkCompact minheap
         run: |
           source .github/scripts/common.sh
