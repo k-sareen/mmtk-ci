@@ -43,18 +43,10 @@ jobs:
       - name: Build MMTk OpenJDK ${{ matrix.debug-level }}
         run: DEBUG_LEVEL=${{ matrix.debug-level }} ./.github/scripts/build-normal.sh
       - name: Upload bundles
-        if: ${{ matrix.debug-level }} == "release"
         uses: actions/upload-artifact@v3
         with:
           name: linux-x86_64-server-${{ matrix.debug-level }}-bundles
           path: ./openjdk/build/linux-x86_64-normal-server-${{ matrix.debug-level }}/bundles/*_bin.tar.gz
-          retention-days: 2
-      - name: Upload bundles
-        if: ${{ matrix.debug-level }} == "fastdebug"
-        uses: actions/upload-artifact@v3
-        with:
-          name: linux-x86_64-server-${{ matrix.debug-level }}-bundles
-          path: ./openjdk/build/linux-x86_64-normal-server-${{ matrix.debug-level }}/bundles/*_bin-debug.tar.gz
           retention-days: 2
 
   test-linux-x64:
@@ -122,8 +114,9 @@ jobs:
       - name: Extract OpenJDK
         run: |
           pushd bundles
-          mkdir -p jdk
-          tar xvf *.tar.gz -C jdk --strip-components=1
+          tar xvf *.tar.gz
+          BIN_DIR=`find . -name bin`
+          mv `dirname $BIN_DIR` jdk
           popd
       - name: Run DaCapo Chopin git-04132797 ${{ matrix.benchmark }} on MMTk OpenJDK ${{ matrix.debug-level }} with 2.5x MarkCompact minheap
         run: |
@@ -142,4 +135,6 @@ jobs:
           name: linux-x86_64-${{ matrix.benchmark }}-${{ matrix.debug-level }}
           path: /tmp/${{ steps.extract-running-run-id.outputs.run-id }}/
       - name: Check for test failures
-        run: sed -n "s/^\(${{ matrix.benchmark }} .*\)$/\1/p" < /tmp/running.stdout | grep "\."; test $? -eq 1
+        run: |
+          RUNNING_OUTPUT=`sed -n "s/^\(${{ matrix.benchmark }} .*\)$/\1/p" < /tmp/running.stdout`
+          echo $RUNNING_OUTPUT | grep "\."; test $? -eq 1
