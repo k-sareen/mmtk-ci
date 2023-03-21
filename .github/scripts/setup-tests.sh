@@ -4,9 +4,6 @@ set -xe
 
 . $(dirname "$0")/common.sh
 
-# Download running
-pip3 install running-ng
-
 # Download DaCapo
 pip3 install gdown
 mkdir -p $DACAPO_PATH

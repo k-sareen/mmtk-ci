@@ -18,65 +18,111 @@ jobs:
       matrix:
         debug-level: ["fastdebug", "release"]
     steps:
-      - name: Checkout MMTk OpenJDK binding
-        run: |
-          pushd ..
-          git clone https://github.com/mmtk/mmtk-openjdk
-          popd
       - uses: actions/checkout@v3
+      - name: Checkout MMTk OpenJDK binding
+        uses: actions/checkout@v3
+        repository: mmtk/mmtk-openjdk
+        path: ./mmtk-openjdk
+      - name: Extract OpenJDK revision
+        id: extract-openjdk-revision
+        run: echo "::set-output name=openjdk-revision::$(sed -n 's/^openjdk_version.=."\(.*\)"$/\1/p' < mmtk-openjdk/mmtk/Cargo.toml)"
+      - name: Checkout OpenJDK
+        uses: actions/checkout@v3
+        with:
+          repository: mmtk/openjdk
+          path: ./openjdk
+          ref: ${{ steps.extract-openjdk-revision.outputs.openjdk-revision }}
       - name: Setup environment
-        run: |
-          ./.github/scripts/checkout.sh
-          ./.github/scripts/setup.sh
-      # name: Style checks
-      # run: ./.github/scripts/style-check.sh
+        run: ./.github/scripts/setup.sh
+      - name: Style checks
+        run: ./.github/scripts/style-check.sh
       - name: Build MMTk OpenJDK ${{ matrix.debug-level }}
         run: DEBUG_LEVEL=${{ matrix.debug-level }} ./.github/scripts/build-normal.sh
       - name: Upload bundles
         uses: actions/upload-artifact@v3
         with:
           name: linux-x86_64-server-${{ matrix.debug-level }}-bundles
-          path: ../openjdk/build/linux-x86_64-normal-server-${{ matrix.debug-level }}/bundles/*
+          path: ./openjdk/build/linux-x86_64-normal-server-${{ matrix.debug-level }}/bundles/*
           retention-days: 1
-  # test-linux-x64:
-  #   name: linux-x64
-  #   runs-on: ubuntu-22.04
-  #   strategy:
-  #     matrix:
-  #       debug-level: ["fastdebug", "release"]
-  #       benchmark:
-  #         - avrora
-  #         - batik
-  #         - biojava
-  #         - cassandra
-  #         - eclipse
-  #         - fop
-  #         - graphchi
-  #         - h2
-  #         - h2o
-  #         - jme
-  #         - jython
-  #         - kafka
-  #         - luindex
-  #         - lusearch
-  #         - pmd
-  #         - spring
-  #         - sunflow
-  #         - tomcat
-  #         # tradebeans
-  #         # tradesoap
-  #         - xalan
-  #         - zxing
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #     - name: Setup environment
-  #       run: |
-  #         ./.github/scripts/setup.sh
-  #         ./.github/scripts/setup-tests.sh
-  #     - name: Build MMTk OpenJDK ${{ matrix.debug-level }}
-  #       run: DEBUG_LEVEL=${{ matrix.debug-level }} ./.github/scripts/build-normal.sh
-  #     - name: Download bundles
-  #       uses: actions/download-artifact@v3
-  #       with:
-  #         name: linux-x86_64-server-${{ matrix.debug-level }}-bundles
-  #         path: bundles
+  test-linux-x64:
+    name: linux-x64
+    needs:
+      - build-linux-x64
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        debug-level: ["fastdebug", "release"]
+        gc:
+          - SemiSpace
+          - GenCopy
+          - Immix
+          - GenImmix
+          - StickyImmix
+          - MarkSweep
+          - MarkCompact
+        benchmark:
+          - avrora
+          # - batik
+          # - biojava
+          # - cassandra
+          # - eclipse
+          # - fop
+          # - graphchi
+          # - h2
+          # - h2o
+          # - jme
+          # - jython
+          # - kafka
+          # - luindex
+          # - lusearch
+          # - pmd
+          # - spring
+          # - sunflow
+          # - tomcat
+          # # tradebeans
+          # # tradesoap
+          # - xalan
+          # - zxing
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup environment
+        run: ./.github/scripts/setup.sh
+      - name: Cache DaCapo Chopin git-04132797
+        id: dacapo-04132797
+        uses: actions/cache@v3
+        with:
+          path: dacapo
+          key: dacapo-chopin-git-04132797
+      - name: Install DaCapo Chopin git-04132797
+        if: steps.dacapo-04132797.outputs.cache-hit != 'true'
+        run: |
+          pip3 install gdown
+          mkdir -p dacapo
+          cd dacapo
+          gdown "https://drive.google.com/file/d/1j4bJkjxEZeUMSQY4JmQwaaQCo-lsQ3Gv/view?usp=share_link"
+          unzip dacapo-evaluation-git-04132797.zip
+      - name: Download bundles
+        uses: actions/download-artifact@v3
+        with:
+          name: linux-x86_64-server-${{ matrix.debug-level }}-bundles
+          path: bundles
+      - name: Extract OpenJDK
+        run: |
+          pushd bundles
+          mkdir -p jdk
+          tar xvf "*_bin.tar.gz" -C jdk --strip-components=1
+          popd
+      - name: Run DaCapo Chopin git-04132797 ${{ matrix.benchmark }} on MMTk OpenJDK ${{ matrix.debug-level }} with 2.5x MarkCompact minheap
+        run: |
+          source .github/scripts/common.sh
+          DACAPO_PATH=`realpath $DACAPO_PATH`
+          sed -i "s;DACAPO_PATH;$DACAPO_PATH;g" .github/configs/base.yml
+          echo "    - ${{ matrix.benchmark }}\n\nconfigs:" >> .github/configs/base.yml
+          echo "  - \"jdk11-master|ms|s|c2|mmtk_gc-${{ matrix.gc }}|tph\"" >> .github/configs/base.yml
+          running runbms /tmp .github/configs/base.yml -s 2.5 -p linux-x86_64-${{ matrix.benchmark }}-${{ matrix.gc }}-${{ matrix.debug-level }}
+      - name: Upload running artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: linux-x86_64-${{ matrix.benchmark }}-${{ matrix.gc }}-${{ matrix.debug-level }}
+          path: /tmp/linux-x86_64-${{ matrix.benchmark }}-${{ matrix.gc }}-${{ matrix.debug-level }}-*
+          retention-days: 1
