@@ -11,63 +11,30 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-linux-x64:
-    name: linux-x64
-    runs-on: ubuntu-22.04
-    strategy:
-      matrix:
-        debug-level: ["fastdebug", "release"]
-    steps:
-      - uses: actions/checkout@v3
-      - name: Checkout MMTk OpenJDK binding
-        uses: actions/checkout@v3
-        with:
-          repository: mmtk/mmtk-openjdk
-          path: ./mmtk-openjdk
-      - name: Extract OpenJDK revision
-        id: extract-openjdk-revision
-        run: echo "::set-output name=openjdk-revision::$(sed -n 's/^openjdk_version.=."\(.*\)"$/\1/p' < mmtk-openjdk/mmtk/Cargo.toml)"
-      - name: Checkout OpenJDK
-        uses: actions/checkout@v3
-        with:
-          repository: mmtk/openjdk
-          path: ./openjdk
-          ref: ${{ steps.extract-openjdk-revision.outputs.openjdk-revision }}
-      - name: Setup environment
-        run: ./.github/scripts/setup.sh
-      - name: Style checks
-        run: ./.github/scripts/style-check.sh
-      - name: Build MMTk OpenJDK ${{ matrix.debug-level }}
-        run: DEBUG_LEVEL=${{ matrix.debug-level }} ./.github/scripts/build-normal.sh
-      - name: Upload bundles
-        uses: actions/upload-artifact@v3
-        with:
-          name: linux-x86_64-server-${{ matrix.debug-level }}-bundles
-          path: ./openjdk/build/linux-x86_64-normal-server-${{ matrix.debug-level }}/bundles/*
-          retention-days: 1
   test-linux-x64:
     name: linux-x64
-    needs:
-      - build-linux-x64
+    # needs:
+    #   - build-linux-x64
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        debug-level: ["fastdebug", "release"]
+        debug-level: ["release"]
         gc:
-          - SemiSpace
-          - GenCopy
+          # SemiSpace
+          # GenCopy
           - Immix
-          - GenImmix
-          - StickyImmix
-          - MarkSweep
-          - MarkCompact
+          - LXR
+          # GenImmix
+          # StickyImmix
+          # MarkSweep
+          # MarkCompact
         benchmark:
           - avrora
           # - batik
           # - biojava
           # - cassandra
           # - eclipse
-          # - fop
+          - fop
           # - graphchi
           # - h2
           # - h2o
@@ -102,17 +69,23 @@ jobs:
           cd dacapo
           gdown "https://drive.google.com/file/d/1j4bJkjxEZeUMSQY4JmQwaaQCo-lsQ3Gv/view?usp=share_link"
           unzip dacapo-evaluation-git-04132797.zip
-      - name: Download bundles
-        uses: actions/download-artifact@v3
-        with:
-          name: linux-x86_64-server-${{ matrix.debug-level }}-bundles
-          path: bundles
+      # name: Download bundles
+      # uses: actions/download-artifact@v3
+      # with:
+      #   name: linux-x86_64-server-${{ matrix.debug-level }}-bundles
+      #   path: bundles
+      - name: Download OpenJDK
+        run: wget "https://github.com/wenyuzhao/lxr-builds/releases/download/latest/jdk11-linux-x86_64-normal-server-mmtk-lxr-release.tar.gz"
+      # name: Extract OpenJDK
+      # run: |
+      #   pushd bundles
+      #   mkdir -p jdk
+      #   tar xvf "*_bin.tar.gz" -C jdk --strip-components=1
+      #   popd
       - name: Extract OpenJDK
         run: |
-          pushd bundles
           mkdir -p jdk
-          tar xvf "*_bin.tar.gz" -C jdk --strip-components=1
-          popd
+          tar xvf "*.tar.gz" -C jdk --strip-components=1
       - name: Run DaCapo Chopin git-04132797 ${{ matrix.benchmark }} on MMTk OpenJDK ${{ matrix.debug-level }} with 2.5x MarkCompact minheap
         run: |
           source .github/scripts/common.sh
