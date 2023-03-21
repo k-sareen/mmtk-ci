@@ -31,13 +31,54 @@ jobs:
       - name: Style checks
         run: ./.github/scripts/style-check.sh
       - name: Echo GitHub
-        run: echo ${{ github }}
+        run: echo ${{ toJSON(github) }}
       - name: Build MMTk OpenJDK ${{ matrix.debug-level }}
         run: DEBUG_LEVEL=${{ matrix.debug-level }} ./.github/scripts/build-normal.sh
-      - name: Upload bundle
+      - name: Upload bundles
         uses: actions/upload-artifact@v3
         with:
-          name: bundles-linux-x64-${{ matrix.debug-level }}
-          path: bundles
+          name: x86_64-server-${{ matrix.debug-level }}-bundles
+          path: $OPENJDK_PATH/build/linux-x86_64-normal-server-${{ matrix.debug-level }}/bundles/*
           retention-days: 1
-
+  # test-linux-x64:
+  #   name: linux-x64
+  #   runs-on: ubuntu-22.04
+  #   strategy:
+  #     matrix:
+  #       debug-level: ["fastdebug", "release"]
+  #       benchmark:
+  #         - avrora
+  #         - batik
+  #         - biojava
+  #         - cassandra
+  #         - eclipse
+  #         - fop
+  #         - graphchi
+  #         - h2
+  #         - h2o
+  #         - jme
+  #         - jython
+  #         - kafka
+  #         - luindex
+  #         - lusearch
+  #         - pmd
+  #         - spring
+  #         - sunflow
+  #         - tomcat
+  #         # tradebeans
+  #         # tradesoap
+  #         - xalan
+  #         - zxing
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - name: Setup environment
+  #       run: |
+  #         ./.github/scripts/setup.sh
+  #         ./.github/scripts/setup-tests.sh
+  #     - name: Build MMTk OpenJDK ${{ matrix.debug-level }}
+  #       run: DEBUG_LEVEL=${{ matrix.debug-level }} ./.github/scripts/build-normal.sh
+  #     - name: Download bundles
+  #       uses: actions/download-artifact@v3
+  #       with:
+  #         name: x86_64-server-${{ matrix.debug-level }}-bundles
+  #         path: bundles
