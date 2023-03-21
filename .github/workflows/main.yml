@@ -95,10 +95,14 @@ jobs:
           DACAPO_PATH=`realpath ./dacapo`
           sed -i "s;DACAPO_PATH;$DACAPO_PATH;g" .github/configs/base.yml
           echo "    - ${{ matrix.benchmark }}" >> .github/configs/base.yml
-          running runbms /tmp .github/configs/base.yml -s 2.5 -p linux-x86_64-${{ matrix.benchmark }}-${{ matrix.gc }}-${{ matrix.debug-level }}
+          running runbms /tmp .github/configs/base.yml -s 2.5 -p linux-x86_64-${{ matrix.benchmark }}-${{ matrix.debug-level }} | tee /tmp/running.stdout
+      - name: Extract running Run ID
+        id: extract-running-run-id
+        run: echo "::set-output name=run-id::$(sed -n 's/^Run id:.\(.*\)$/\1/p' < /tmp/running.stdout)"
       - name: Upload running artifacts
         uses: actions/upload-artifact@v3
         with:
           name: linux-x86_64-${{ matrix.benchmark }}-${{ matrix.debug-level }}
-          path: /tmp/linux-x86_64-${{ matrix.benchmark }}-${{ matrix.debug-level }}-*
-          retention-days: 1
+          path: ${{ steps.extract-running-run-id.outputs.run-id }}
+      - name: Check for test failures
+        run: sed -n "s/^\(${{ matrix.benchmark }} .*\)$/\1/p" < /tmp/running.stdout | grep "\."; test $? -eq 1
