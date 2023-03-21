@@ -1,0 +1,36 @@
+name: "Continuous Integration"
+
+on:
+  pull_request:
+    branches:
+      - master
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  build-linux-x64:
+    name: linux-x64
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        debug-level: ["fastdebug", "release"]
+    steps:
+      - name: Checkout repository
+        run: git clone https://github.com/mmtk-openjdk
+      - name: Setup environment
+        run: |
+          ./.github/scripts/checkout.sh
+          ./.github/scripts/setup.sh
+      - name: Style checks
+        run: ./.github/scripts/style-check.sh
+      - name: Build ${{ matrix.debug-level }} MMTk OpenJDK
+        run: DEBUG_LEVEL=${{ matrix.debug-level }} ./.github/scripts/build-normal.sh
+      - name: Upload bundle
+        uses: actions/upload-artifact@v3
+        with:
+          name: bundles-${{ jobs[github[job]].name }}-${{ matrix.debug-level }}
+          path: bundles
+          retention-days: 1
+
