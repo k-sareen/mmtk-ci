@@ -37,7 +37,7 @@ jobs:
       - name: Upload bundles
         uses: actions/upload-artifact@v3
         with:
-          name: x86_64-server-${{ matrix.debug-level }}-bundles
+          name: linux-x86_64-server-${{ matrix.debug-level }}-bundles
           path: $OPENJDK_PATH/build/linux-x86_64-normal-server-${{ matrix.debug-level }}/bundles/*
           retention-days: 1
   # test-linux-x64:
@@ -80,5 +80,5 @@ jobs:
   #     - name: Download bundles
   #       uses: actions/download-artifact@v3
   #       with:
-  #         name: x86_64-server-${{ matrix.debug-level }}-bundles
+  #         name: linux-x86_64-server-${{ matrix.debug-level }}-bundles
   #         path: bundles
