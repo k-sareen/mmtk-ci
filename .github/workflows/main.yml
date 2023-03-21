@@ -20,9 +20,9 @@ jobs:
     steps:
       - name: Checkout repository
         run: |
-          cd ..
+          pushd ..
           git clone https://github.com/mmtk/mmtk-openjdk
-          pwd
+          popd
       - uses: actions/checkout@v3
       - name: Setup environment
         run: |
