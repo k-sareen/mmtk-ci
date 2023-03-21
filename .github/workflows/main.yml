@@ -28,7 +28,7 @@ jobs:
         id: extract-openjdk-revision
         run: |
           OPENJDK_VERSION=$(sed -n 's/^openjdk_version.=."\(.*\)"$/\1/p' < mmtk-openjdk/mmtk/Cargo.toml)
-          echo "{openjdk-revision}={$OPENJDK_VERSION}" >> $GITHUB_OUTPUT
+          echo "openjdk-revision=$OPENJDK_VERSION" >> $GITHUB_OUTPUT
       - name: Checkout OpenJDK
         uses: actions/checkout@v3
         with:
@@ -124,7 +124,7 @@ jobs:
         id: extract-running-run-id
         run: |
           RUN_ID=$(sed -n 's/^Run id:.\(.*\)$/\1/p' < /tmp/running.stdout)
-          echo "{run-id}={$RUN_ID}" >> $GITHUB_OUTPUT
+          echo "run-id=$RUN_ID" >> $GITHUB_OUTPUT
       - name: Upload running artifacts
         uses: actions/upload-artifact@v3
         with:
