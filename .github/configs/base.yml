@@ -59,6 +59,7 @@ suites:
 
 overrides:
   invocations: 3
+  remote_host: null
 
 modifiers:
   mmtk_gc:
