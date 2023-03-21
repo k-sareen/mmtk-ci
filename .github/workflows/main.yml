@@ -70,7 +70,7 @@ jobs:
           pip3 install gdown
           mkdir -p dacapo
           cd dacapo
-          gdown "https://drive.google.com/file/d/1j4bJkjxEZeUMSQY4JmQwaaQCo-lsQ3Gv"
+          gdown "1j4bJkjxEZeUMSQY4JmQwaaQCo-lsQ3Gv"
           unzip dacapo-evaluation-git-04132797.zip
       # name: Download bundles
       # uses: actions/download-artifact@v3
