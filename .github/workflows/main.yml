@@ -16,41 +16,32 @@ jobs:
     # needs:
     #   - build-linux-x64
     runs-on: ubuntu-22.04
-    # strategy:
-    #   matrix:
-    #     debug-level: ["release"]
-    #     gc:
-    #       # SemiSpace
-    #       # GenCopy
-    #       - Immix
-    #       - LXR
-    #       # GenImmix
-    #       # StickyImmix
-    #       # MarkSweep
-    #       # MarkCompact
-    #     benchmark:
-    #       - avrora
-    #       # - batik
-    #       # - biojava
-    #       # - cassandra
-    #       # - eclipse
-    #       - fop
-    #       # - graphchi
-    #       # - h2
-    #       # - h2o
-    #       # - jme
-    #       # - jython
-    #       # - kafka
-    #       # - luindex
-    #       # - lusearch
-    #       # - pmd
-    #       # - spring
-    #       # - sunflow
-    #       # - tomcat
-    #       # # tradebeans
-    #       # # tradesoap
-    #       # - xalan
-    #       # - zxing
+    strategy:
+      matrix:
+        debug-level: ["release"]
+        benchmark:
+          - avrora
+          # - batik
+          # - biojava
+          # - cassandra
+          # - eclipse
+          - fop
+          # - graphchi
+          # - h2
+          # - h2o
+          # - jme
+          # - jython
+          # - kafka
+          # - luindex
+          # - lusearch
+          # - pmd
+          # - spring
+          # - sunflow
+          # - tomcat
+          # # tradebeans
+          # # tradesoap
+          # - xalan
+          # - zxing
     steps:
       - uses: actions/checkout@v3
       - name: Setup environment
@@ -69,7 +60,7 @@ jobs:
         run: |
           mkdir -p dacapo
           pushd dacapo
-          wget "https://cloudstor.aarnet.edu.au/plus/s/9cMreAgANcMUOzq/download" -O dacapo-evaluation-git-04132797.zip
+          wget -q "https://cloudstor.aarnet.edu.au/plus/s/9cMreAgANcMUOzq/download" -O dacapo-evaluation-git-04132797.zip
           popd
       - name: Unzip DaCapo Chopin git-04132797
         run: |
@@ -93,23 +84,23 @@ jobs:
       #   mkdir -p jdk
       #   tar xvf "*_bin.tar.gz" -C jdk --strip-components=1
       #   popd
-      # name: Extract OpenJDK
-      # run: |
-      #   pushd bundles
-      #   mkdir -p jdk
-      #   tar xvf *.tar.gz -C jdk --strip-components=1
-      #   popd
-      # name: Run DaCapo Chopin git-04132797 ${{ matrix.benchmark }} on MMTk OpenJDK ${{ matrix.debug-level }} with 2.5x MarkCompact minheap
-      # run: |
-      #   source .github/scripts/common.sh
-      #   DACAPO_PATH=`realpath $DACAPO_PATH`
-      #   sed -i "s;DACAPO_PATH;$DACAPO_PATH;g" .github/configs/base.yml
-      #   echo "    - ${{ matrix.benchmark }}\n\nconfigs:" >> .github/configs/base.yml
-      #   echo "  - \"jdk11-master|ms|s|c2|mmtk_gc-${{ matrix.gc }}|tph\"" >> .github/configs/base.yml
-      #   running runbms /tmp .github/configs/base.yml -s 2.5 -p linux-x86_64-${{ matrix.benchmark }}-${{ matrix.gc }}-${{ matrix.debug-level }}
-      # name: Upload running artifacts
-      # uses: actions/upload-artifact@v3
-      # with:
-      #   name: linux-x86_64-${{ matrix.benchmark }}-${{ matrix.gc }}-${{ matrix.debug-level }}
-      #   path: /tmp/linux-x86_64-${{ matrix.benchmark }}-${{ matrix.gc }}-${{ matrix.debug-level }}-*
-      #   retention-days: 1
+      - name: Extract OpenJDK
+        run: |
+          pushd bundles
+          mkdir -p jdk
+          tar xvf *.tar.gz -C jdk --strip-components=1
+          popd
+      - name: Run DaCapo Chopin git-04132797 ${{ matrix.benchmark }} on MMTk OpenJDK ${{ matrix.debug-level }} with 2.5x MarkCompact minheap
+        run: |
+          source .github/scripts/common.sh
+          DACAPO_PATH=`realpath $DACAPO_PATH`
+          sed -i "s;DACAPO_PATH;$DACAPO_PATH;g" .github/configs/base.yml
+          echo "    - ${{ matrix.benchmark }}" >> .github/configs/base.yml
+          running runbms /tmp .github/configs/base.yml -s 2.5 -p linux-x86_64-${{ matrix.benchmark }}-${{ matrix.gc }}-${{ matrix.debug-level }}
+      - name: Upload running artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: linux-x86_64-${{ matrix.benchmark }}-${{ matrix.debug-level }}
+          path: /tmp/linux-x86_64-${{ matrix.benchmark }}-${{ matrix.debug-level }}-*
+          retention-days: 1
+      - name:

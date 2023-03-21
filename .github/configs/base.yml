@@ -72,5 +72,9 @@ runtimes:
     release: 11
     home: "/home/runner/work/mmtk-ci/mmtk-ci/bundles/jdk"
 
+configs:
+  - "jdk11-master|ms|s|c2|mmtk_gc-Immix|tph"
+  - "jdk11-master|ms|s|c2|mmtk_gc-LXR|tph"
+
 benchmarks:
   dacapochopin-04132797-ci:
