@@ -7,10 +7,10 @@ set -xe
 export RUSTFLAGS="-D warnings"
 
 pushd $BINDING_PATH/mmtk
-cargo clippy
-cargo clippy --release
+cargo clippy || exit $?
+cargo clippy --release || exit $?
 
-cargo fmt -- --check
+cargo fmt -- --check || exit $?
 popd
 
 find $BINDING_PATH/openjdk \
@@ -20,5 +20,5 @@ find $BINDING_PATH/openjdk \
     -o -name '*.rs' \
     -o -name '*.toml' \
     -o -name '*.gmk' \
-    -exec ./check-lineends.sh '{}' \;
+    -exec $(dirname "$0")/check-lineends.sh '{}' \;
 
