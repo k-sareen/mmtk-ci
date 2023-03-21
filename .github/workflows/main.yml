@@ -11,84 +11,84 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # build-linux-x64:
-  #   name: linux-x64
-  #   runs-on: ubuntu-22.04
-  #   strategy:
-  #     fail-fast: true
-  #     matrix:
-  #       debug-level: ["fastdebug", "release"]
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #     - name: Checkout MMTk OpenJDK binding
-  #       uses: actions/checkout@v3
-  #       with:
-  #         repository: mmtk/mmtk-openjdk
-  #         path: ./mmtk-openjdk
-  #     - name: Extract OpenJDK revision
-  #       id: extract-openjdk-revision
-  #       run: |
-  #         OPENJDK_VERSION=`sed -n 's/^openjdk_version.=."\(.*\)"$/\1/p' < mmtk-openjdk/mmtk/Cargo.toml`
-  #         echo "openjdk-revision=$OPENJDK_VERSION" >> $GITHUB_OUTPUT
-  #     - name: Checkout OpenJDK
-  #       uses: actions/checkout@v3
-  #       with:
-  #         repository: mmtk/openjdk
-  #         path: ./openjdk
-  #         ref: ${{ steps.extract-openjdk-revision.outputs.openjdk-revision }}
-  #     - name: Setup environment
-  #       run: ./.github/scripts/setup.sh
-  #     - name: Style checks
-  #       run: ./.github/scripts/style-check.sh
-  #     - name: Build MMTk OpenJDK ${{ matrix.debug-level }}
-  #       run: DEBUG_LEVEL=${{ matrix.debug-level }} ./.github/scripts/build-normal.sh
-  #     - name: Upload bundles
-  #       if: ${{ matrix.debug-level }} == "release"
-  #       uses: actions/upload-artifact@v3
-  #       with:
-  #         name: linux-x86_64-server-${{ matrix.debug-level }}-bundles
-  #         path: ./openjdk/build/linux-x86_64-normal-server-${{ matrix.debug-level }}/bundles/*_bin.tar.gz
-  #         retention-days: 2
-  #     - name: Upload bundles
-  #       if: ${{ matrix.debug-level }} == "fastdebug"
-  #       uses: actions/upload-artifact@v3
-  #       with:
-  #         name: linux-x86_64-server-${{ matrix.debug-level }}-bundles
-  #         path: ./openjdk/build/linux-x86_64-normal-server-${{ matrix.debug-level }}/bundles/*_bin-debug.tar.gz
-  #         retention-days: 2
+  build-linux-x64:
+    name: linux-x64
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: true
+      matrix:
+        debug-level: ["fastdebug", "release"]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Checkout MMTk OpenJDK binding
+        uses: actions/checkout@v3
+        with:
+          repository: mmtk/mmtk-openjdk
+          path: ./mmtk-openjdk
+      - name: Extract OpenJDK revision
+        id: extract-openjdk-revision
+        run: |
+          OPENJDK_VERSION=`sed -n 's/^openjdk_version.=."\(.*\)"$/\1/p' < mmtk-openjdk/mmtk/Cargo.toml`
+          echo "openjdk-revision=$OPENJDK_VERSION" >> $GITHUB_OUTPUT
+      - name: Checkout OpenJDK
+        uses: actions/checkout@v3
+        with:
+          repository: mmtk/openjdk
+          path: ./openjdk
+          ref: ${{ steps.extract-openjdk-revision.outputs.openjdk-revision }}
+      - name: Setup environment
+        run: ./.github/scripts/setup.sh
+      - name: Style checks
+        run: ./.github/scripts/style-check.sh
+      - name: Build MMTk OpenJDK ${{ matrix.debug-level }}
+        run: DEBUG_LEVEL=${{ matrix.debug-level }} ./.github/scripts/build-normal.sh
+      - name: Upload bundles
+        if: ${{ matrix.debug-level }} == "release"
+        uses: actions/upload-artifact@v3
+        with:
+          name: linux-x86_64-server-${{ matrix.debug-level }}-bundles
+          path: ./openjdk/build/linux-x86_64-normal-server-${{ matrix.debug-level }}/bundles/*_bin.tar.gz
+          retention-days: 2
+      - name: Upload bundles
+        if: ${{ matrix.debug-level }} == "fastdebug"
+        uses: actions/upload-artifact@v3
+        with:
+          name: linux-x86_64-server-${{ matrix.debug-level }}-bundles
+          path: ./openjdk/build/linux-x86_64-normal-server-${{ matrix.debug-level }}/bundles/*_bin-debug.tar.gz
+          retention-days: 2
 
   test-linux-x64:
     name: linux-x64
-    # needs:
-    #   - build-linux-x64
+    needs:
+      - build-linux-x64
     runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
-        debug-level: ["release"]
+        debug-level: ["fastdebug", "release"]
         benchmark:
           - avrora
-          # - batik
-          # - biojava
-          # - cassandra
-          # - eclipse
-          # - fop
-          # - graphchi
-          # - h2
-          # - h2o
-          # - jme
-          # - jython
-          # - kafka
-          # - luindex
-          # - lusearch
-          # - pmd
-          # # spring
-          # - sunflow
-          # - tomcat
-          # # tradebeans
-          # # tradesoap
+          - batik
+          - biojava
+          - cassandra
+          - eclipse
+          - fop
+          - graphchi
+          - h2
+          - h2o
+          - jme
+          - jython
+          - kafka
+          - luindex
+          - lusearch
+          - pmd
+          # spring
+          - sunflow
+          - tomcat
+          # tradebeans
+          # tradesoap
           - xalan
-          # - zxing
+          - zxing
     steps:
       - uses: actions/checkout@v3
       - name: Setup environment
@@ -114,18 +114,11 @@ jobs:
           pushd dacapo
           unzip dacapo-evaluation-git-04132797.zip
           popd
-      # - name: Download bundles
-      #   uses: actions/download-artifact@v3
-      #   with:
-      #     name: linux-x86_64-server-${{ matrix.debug-level }}-bundles
-      #     path: bundles
       - name: Download bundles
-        run: |
-          mkdir -p bundles
-          pushd bundles
-          wget -q "https://pipelines.actions.githubusercontent.com/serviceHosts/998376a3-99b5-4155-8a1d-e64a77522324/_apis/pipelines/1/runs/27/signedartifactscontent?artifactName=linux-x86_64-server-release-bundles&urlExpires=2023-03-21T16%3A22%3A21.4176761Z&urlSigningMethod=HMACV2&urlSignature=04EEUp1SByXCfMAyUNMIUt8CpzzibQwJqWiwOPj4G7Q%3D" -O bundle.zip
-          unzip bundle.zip
-          popd
+        uses: actions/download-artifact@v3
+        with:
+          name: linux-x86_64-server-${{ matrix.debug-level }}-bundles
+          path: bundles
       - name: Extract OpenJDK
         run: |
           pushd bundles
