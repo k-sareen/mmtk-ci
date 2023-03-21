@@ -92,8 +92,7 @@ jobs:
           popd
       - name: Run DaCapo Chopin git-04132797 ${{ matrix.benchmark }} on MMTk OpenJDK ${{ matrix.debug-level }} with 2.5x MarkCompact minheap
         run: |
-          source .github/scripts/common.sh
-          DACAPO_PATH=`realpath $DACAPO_PATH`
+          DACAPO_PATH=`realpath ./dacapo`
           sed -i "s;DACAPO_PATH;$DACAPO_PATH;g" .github/configs/base.yml
           echo "    - ${{ matrix.benchmark }}" >> .github/configs/base.yml
           running runbms /tmp .github/configs/base.yml -s 2.5 -p linux-x86_64-${{ matrix.benchmark }}-${{ matrix.gc }}-${{ matrix.debug-level }}
