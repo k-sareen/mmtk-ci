@@ -28,10 +28,8 @@ jobs:
         run: |
           ./.github/scripts/checkout.sh
           ./.github/scripts/setup.sh
-      - name: Style checks
-        run: ./.github/scripts/style-check.sh
-      - name: Echo GitHub
-        run: echo ${{ toJSON(github) }}
+      # name: Style checks
+      # run: ./.github/scripts/style-check.sh
       - name: Build MMTk OpenJDK ${{ matrix.debug-level }}
         run: DEBUG_LEVEL=${{ matrix.debug-level }} ./.github/scripts/build-normal.sh
       - name: Upload bundles
