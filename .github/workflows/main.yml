@@ -148,7 +148,8 @@ jobs:
           set -xe
           RUNNING_OUTPUT=`sed -n "s/^\(${{ matrix.benchmark }} .*\)$/\1/p" < /tmp/running.stdout`
           echo $RUNNING_OUTPUT
-          echo $RUNNING_OUTPUT | grep "\."
-          X=$?
-          echo "grep exit code = $X"
-          test $X -eq 1
+          OUT=`echo $RUNNING_OUTPUT | grep "\."`
+          echo $OUT
+          if [[ $OUT != "" ]]; then
+            exit 1
+          fi
