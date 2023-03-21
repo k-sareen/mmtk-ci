@@ -54,7 +54,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Setup environment
-        run: ./.github/scripts/setup.sh
+        run: |
+          pip3 install running-ng
+          sudo apt-get update -y
+          sudo apt-get install -y build-essential libx11-dev libxext-dev libxrender-dev libxtst-dev libxt-dev libcups2-dev libasound2-dev libxrandr-dev
       - name: Cache DaCapo Chopin git-04132797
         id: dacapo-04132797
         uses: actions/cache@v3
