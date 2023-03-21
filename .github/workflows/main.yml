@@ -146,6 +146,4 @@ jobs:
       - name: Check for test failures
         run: |
           set -xe
-          RUNNING_OUTPUT=`sed -n "s/^\(${{ matrix.benchmark }} .*\)$/\1/p" < /tmp/running.stdout`
-          echo $RUNNING_OUTPUT
-          echo $RUNNING_OUTPUT | grep -vq "\."
+          sed -n "s/^\(${{ matrix.benchmark }} .*\)$/\1/p" < /tmp/running.stdout | grep -vq "\."
