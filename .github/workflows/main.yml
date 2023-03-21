@@ -67,10 +67,9 @@ jobs:
       - name: Install DaCapo Chopin git-04132797
         if: steps.dacapo-04132797.outputs.cache-hit != 'true'
         run: |
-          pip3 install gdown
           mkdir -p dacapo
           pushd dacapo
-          gdown "1j4bJkjxEZeUMSQY4JmQwaaQCo-lsQ3Gv"
+          wget "https://cloudstor.aarnet.edu.au/plus/s/9cMreAgANcMUOzq/download" -O dacapo-evaluation-git-04132797.zip
           popd
       - name: Unzip DaCapo Chopin git-04132797
         run: |
