@@ -7,7 +7,7 @@ on:
       - main
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -26,7 +26,9 @@ jobs:
           path: ./mmtk-openjdk
       - name: Extract OpenJDK revision
         id: extract-openjdk-revision
-        run: echo {openjdk-revision}={$(sed -n 's/^openjdk_version.=."\(.*\)"$/\1/p' < mmtk-openjdk/mmtk/Cargo.toml)} >> $GITHUB_OUTPUT
+        run: |
+          OPENJDK_VERSION=$(sed -n 's/^openjdk_version.=."\(.*\)"$/\1/p' < mmtk-openjdk/mmtk/Cargo.toml)
+          echo "{openjdk-revision}={$OPENJDK_VERSION}" >> $GITHUB_OUTPUT
       - name: Checkout OpenJDK
         uses: actions/checkout@v3
         with:
@@ -74,7 +76,7 @@ jobs:
           # - tomcat
           # # tradebeans
           # # tradesoap
-          # - xalan
+          - xalan
           # - zxing
     steps:
       - uses: actions/checkout@v3
@@ -120,7 +122,9 @@ jobs:
           running runbms /tmp .github/configs/base.yml -s 2.5 -p linux-x86_64-${{ matrix.benchmark }}-${{ matrix.debug-level }} | tee /tmp/running.stdout
       - name: Extract running run id
         id: extract-running-run-id
-        run: echo {run-id}={$(sed -n 's/^Run id:.\(.*\)$/\1/p' < /tmp/running.stdout)} >> $GITHUB_OUTPUT
+        run: |
+          RUN_ID=$(sed -n 's/^Run id:.\(.*\)$/\1/p' < /tmp/running.stdout)
+          echo "{run-id}={$RUN_ID}" >> $GITHUB_OUTPUT
       - name: Upload running artifacts
         uses: actions/upload-artifact@v3
         with:
