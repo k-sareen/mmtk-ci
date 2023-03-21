@@ -103,4 +103,3 @@ jobs:
           name: linux-x86_64-${{ matrix.benchmark }}-${{ matrix.debug-level }}
           path: /tmp/linux-x86_64-${{ matrix.benchmark }}-${{ matrix.debug-level }}-*
           retention-days: 1
-      - name:
