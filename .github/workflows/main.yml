@@ -123,7 +123,7 @@ jobs:
         run: |
           mkdir -p bundles
           pushd bundles
-        wget -q "https://pipelines.actions.githubusercontent.com/serviceHosts/998376a3-99b5-4155-8a1d-e64a77522324/_apis/pipelines/1/runs/27/signedartifactscontent?artifactName=linux-x86_64-server-release-bundles&urlExpires=2023-03-21T16%3A20%3A27.7379583Z&urlSigningMethod=HMACV2&urlSignature=isV%2Fyvw8nOjB90DEYlcHYmnIRWseg4jHq5pbJPt%2Feg8%3D" -O bundle.zip
+          wget -q "https://pipelines.actions.githubusercontent.com/serviceHosts/998376a3-99b5-4155-8a1d-e64a77522324/_apis/pipelines/1/runs/27/signedartifactscontent?artifactName=linux-x86_64-server-release-bundles&urlExpires=2023-03-21T16%3A22%3A21.4176761Z&urlSigningMethod=HMACV2&urlSignature=04EEUp1SByXCfMAyUNMIUt8CpzzibQwJqWiwOPj4G7Q%3D" -O bundle.zip
         unzip bundle.zip
         popd
       - name: Extract OpenJDK
