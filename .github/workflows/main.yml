@@ -20,6 +20,7 @@ jobs:
     steps:
       - name: Checkout repository
         run: git clone https://github.com/mmtk/mmtk-openjdk
+      - uses: actions/checkout@v3
       - name: Setup environment
         run: |
           ./.github/scripts/checkout.sh
@@ -28,7 +29,7 @@ jobs:
         run: ./.github/scripts/style-check.sh
       - name: Echo GitHub
         run: echo ${{ github }}
-      - name: Build ${{ matrix.debug-level }} MMTk OpenJDK
+      - name: Build MMTk OpenJDK ${{ matrix.debug-level }}
         run: DEBUG_LEVEL=${{ matrix.debug-level }} ./.github/scripts/build-normal.sh
       - name: Upload bundle
         uses: actions/upload-artifact@v3
