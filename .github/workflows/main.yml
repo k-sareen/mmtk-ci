@@ -7,25 +7,59 @@ on:
       - main
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  group: ${{ github.workflow }}-${{ github.head_ref }}
   cancel-in-progress: true
 
 jobs:
-  test-linux-x64:
+  build-linux-x64:
     name: linux-x64
-    # needs:
-    #   - build-linux-x64
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        debug-level: ["release"]
+        debug-level: ["fastdebug", "release"]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Checkout MMTk OpenJDK binding
+        uses: actions/checkout@v3
+        with:
+          repository: mmtk/mmtk-openjdk
+          path: ./mmtk-openjdk
+      - name: Extract OpenJDK revision
+        id: extract-openjdk-revision
+        run: echo {openjdk-revision}={$(sed -n 's/^openjdk_version.=."\(.*\)"$/\1/p' < mmtk-openjdk/mmtk/Cargo.toml)} >> $GITHUB_OUTPUT
+      - name: Checkout OpenJDK
+        uses: actions/checkout@v3
+        with:
+          repository: mmtk/openjdk
+          path: ./openjdk
+          ref: ${{ steps.extract-openjdk-revision.outputs.openjdk-revision }}
+      - name: Setup environment
+        run: ./.github/scripts/setup.sh
+      - name: Style checks
+        run: ./.github/scripts/style-check.sh
+      - name: Build MMTk OpenJDK ${{ matrix.debug-level }}
+        run: DEBUG_LEVEL=${{ matrix.debug-level }} ./.github/scripts/build-normal.sh
+      - name: Upload bundles
+        uses: actions/upload-artifact@v3
+        with:
+          name: linux-x86_64-server-${{ matrix.debug-level }}-bundles
+          path: ./openjdk/build/linux-x86_64-normal-server-${{ matrix.debug-level }}/bundles/*_bin.tar.gz
+          retention-days: 2
+  test-linux-x64:
+    name: linux-x64
+    needs:
+      - build-linux-x64
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        debug-level: ["fastdebug", "release"]
         benchmark:
           - avrora
           # - batik
           # - biojava
           # - cassandra
           # - eclipse
-          - fop
+          # - fop
           # - graphchi
           # - h2
           # - h2o
@@ -67,28 +101,16 @@ jobs:
           pushd dacapo
           unzip dacapo-evaluation-git-04132797.zip
           popd
-      # name: Download bundles
-      # uses: actions/download-artifact@v3
-      # with:
-      #   name: linux-x86_64-server-${{ matrix.debug-level }}-bundles
-      #   path: bundles
-      - name: Download OpenJDK
-        run: |
-          mkdir -p bundles
-          pushd bundles
-          wget -q "https://github.com/wenyuzhao/lxr-builds/releases/download/latest/jdk11-linux-x86_64-normal-server-mmtk-lxr-release.tar.gz"
-          popd
-      # name: Extract OpenJDK
-      # run: |
-      #   pushd bundles
-      #   mkdir -p jdk
-      #   tar xvf "*_bin.tar.gz" -C jdk --strip-components=1
-      #   popd
+      - name: Download bundles
+        uses: actions/download-artifact@v3
+        with:
+          name: linux-x86_64-server-${{ matrix.debug-level }}-bundles
+          path: bundles
       - name: Extract OpenJDK
         run: |
           pushd bundles
           mkdir -p jdk
-          tar xvf *.tar.gz -C jdk --strip-components=1
+          tar xvf "*.tar.gz" -C jdk --strip-components=1
           popd
       - name: Run DaCapo Chopin git-04132797 ${{ matrix.benchmark }} on MMTk OpenJDK ${{ matrix.debug-level }} with 2.5x MarkCompact minheap
         run: |
@@ -96,13 +118,13 @@ jobs:
           sed -i "s;DACAPO_PATH;$DACAPO_PATH;g" .github/configs/base.yml
           echo "    - ${{ matrix.benchmark }}" >> .github/configs/base.yml
           running runbms /tmp .github/configs/base.yml -s 2.5 -p linux-x86_64-${{ matrix.benchmark }}-${{ matrix.debug-level }} | tee /tmp/running.stdout
-      - name: Extract running Run ID
+      - name: Extract running run id
         id: extract-running-run-id
-        run: echo "::set-output name=run-id::$(sed -n 's/^Run id:.\(.*\)$/\1/p' < /tmp/running.stdout)"
+        run: echo {run-id}={$(sed -n 's/^Run id:.\(.*\)$/\1/p' < /tmp/running.stdout)} >> $GITHUB_OUTPUT
       - name: Upload running artifacts
         uses: actions/upload-artifact@v3
         with:
           name: linux-x86_64-${{ matrix.benchmark }}-${{ matrix.debug-level }}
-          path: ${{ steps.extract-running-run-id.outputs.run-id }}
+          path: /tmp/${{ steps.extract-running-run-id.outputs.run-id }}/
       - name: Check for test failures
         run: sed -n "s/^\(${{ matrix.benchmark }} .*\)$/\1/p" < /tmp/running.stdout | grep "\."; test $? -eq 1
